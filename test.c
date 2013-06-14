@@ -18,14 +18,13 @@ int main()
     if (conf == NULL)
         error(1, errno, "ini_load fail");
 
+    char *type;
+    ini_read_str(conf, "main", "type", &type, "test");
+    puts(type);
+    free(type);
+
     char value[100] = { 0 };
-
-    if (ini_read_strn(conf, "main", "type", value, sizeof(value), NULL) < 0)
-        error(1, errno, "ini_read_string fail");
-    puts(value);
-
-    if (ini_read_strn(conf, "main", "len", value, sizeof(value), NULL) < 0)
-        error(1, errno, "ini_read_string fail");
+    ini_read_strn(conf, "main", "len", value, sizeof(value), NULL);
     puts(value);
 
     int i;

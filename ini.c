@@ -45,20 +45,23 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
 
     while (len >= 2 && (*lineptr)[len - 2] == '\\')
     {
-        ssize_t next_len = getline(&_line, &_n, stream);
-        if (next_len == -1)
+        if (getline(&_line, &_n, stream) == -1)
             return 0;
 
         char *next_line = _line;
         while (isspace(*next_line))
             ++next_line;
+        ssize_t next_len = strlen(next_line);
 
-        while (*n < len + next_len)
-            *n *= 2;
+        if (*n < len + next_len)
+        {
+            while (*n < len + next_len)
+                *n *= 2;
 
-        *lineptr = realloc(*lineptr, *n);
-        if (*lineptr == NULL)
-            return -1;
+            *lineptr = realloc(*lineptr, *n);
+            if (*lineptr == NULL)
+                return -1;
+        }
 
         if (isspace((*lineptr)[len - 3]))
             (*lineptr)[len - 2] = '\0';
@@ -370,7 +373,7 @@ static char *sstrncpy(char *dest, const char *src, size_t n)
 int ini_read_str(ini_t *handle,
         char *section, char *name, char **value, char *default_value)
 {
-    if (handle == NULL || !section || !name || *value)
+    if (!handle || !section || !name || !value)
         return -1;
 
     struct ini_section *curr = handle;
