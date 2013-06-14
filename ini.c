@@ -78,9 +78,9 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
     return len;
 }
 
-void ini_free(ini_t *handle)
+void ini_free(ini_t *handler)
 {
-    struct ini_section *curr = handle;
+    struct ini_section *curr = handler;
     struct ini_section *next = NULL;
 
     while (curr)
@@ -113,10 +113,10 @@ void ini_free(ini_t *handle)
     return;
 }
 
-static void ini_print(ini_t *handle)
+static void ini_print(ini_t *handler)
 {
 # ifdef DEBUG
-    struct ini_section *curr = handle;
+    struct ini_section *curr = handler;
     while (curr)
     {
         if (curr->name == NULL)
@@ -370,13 +370,13 @@ static char *sstrncpy(char *dest, const char *src, size_t n)
     return strncat(dest, src, n - 1);
 }
 
-int ini_read_str(ini_t *handle,
+int ini_read_str(ini_t *handler,
         char *section, char *name, char **value, char *default_value)
 {
-    if (!handle || !section || !name || !value)
+    if (!handler || !section || !name || !value)
         return -1;
 
-    struct ini_section *curr = handle;
+    struct ini_section *curr = handler;
 
     while (curr)
     {
@@ -430,11 +430,11 @@ int ini_read_str(ini_t *handle,
     return 1;
 }
 
-int ini_read_strn(ini_t *handle,
+int ini_read_strn(ini_t *handler,
         char *section, char *name, char *value, size_t n, char *default_value)
 {
     char *_value = NULL;
-    int ret = ini_read_str(handle, section, name, &_value, default_value);
+    int ret = ini_read_str(handler, section, name, &_value, default_value);
     if (ret < 0)
         return ret;
     if (_value == NULL)
@@ -446,11 +446,11 @@ int ini_read_strn(ini_t *handle,
     return ret;
 }
 
-int __ini_read_num(ini_t *handle,
+int __ini_read_num(ini_t *handler,
         char *section, char *name, void *value, bool is_unsigned)
 {
     char s[100] = { 0 };
-    int ret = ini_read_strn(handle, section, name, s, sizeof(s), NULL);
+    int ret = ini_read_strn(handler, section, name, s, sizeof(s), NULL);
     if (ret < 0)
         return ret;
 
@@ -469,7 +469,7 @@ int __ini_read_num(ini_t *handle,
 
 # define INI_READ_SIGNED(type) do { \
     int64_t v; \
-    int ret = __ini_read_num(handle, section, name, &v, false); \
+    int ret = __ini_read_num(handler, section, name, &v, false); \
     if (ret < 0) { \
         return ret; \
     } \
@@ -483,7 +483,7 @@ int __ini_read_num(ini_t *handle,
 
 # define INI_READ_UNSIGNED(type) do { \
     uint64_t v; \
-    int ret = __ini_read_num(handle, section, name, &v, true); \
+    int ret = __ini_read_num(handler, section, name, &v, true); \
     if (ret < 0) { \
         return ret; \
     } \
@@ -495,71 +495,71 @@ int __ini_read_num(ini_t *handle,
     return 1; \
 } while (0)
 
-int ini_read_int(ini_t *handle,
+int ini_read_int(ini_t *handler,
         char *section, char *name, int *value, int default_value)
 {
     INI_READ_SIGNED(int);
 }
 
-int ini_read_unsigned(ini_t *handle,
+int ini_read_unsigned(ini_t *handler,
         char *section, char *name, unsigned *value, unsigned default_value)
 {
     INI_READ_UNSIGNED(unsigned);
 }
 
-int ini_read_int8(ini_t *handle,
+int ini_read_int8(ini_t *handler,
         char *section, char *name, int8_t *value, int8_t default_value)
 {
     INI_READ_SIGNED(int8_t);
 }
 
-int ini_read_uint8(ini_t *handle,
+int ini_read_uint8(ini_t *handler,
         char *section, char *name, uint8_t *value, uint8_t default_value)
 {
     INI_READ_UNSIGNED(uint8_t);
 }
 
-int ini_read_int16(ini_t *handle,
+int ini_read_int16(ini_t *handler,
         char *section, char *name, int16_t *value, int16_t default_value)
 {
     INI_READ_SIGNED(int16_t);
 }
 
-int ini_read_uint16(ini_t *handle,
+int ini_read_uint16(ini_t *handler,
         char *section, char *name, uint16_t *value, uint16_t default_value)
 {
     INI_READ_UNSIGNED(uint16_t);
 }
 
-int ini_read_int32(ini_t *handle,
+int ini_read_int32(ini_t *handler,
         char *section, char *name, int32_t *value, int32_t default_value)
 {
     INI_READ_SIGNED(int32_t);
 }
 
-int ini_read_uint32(ini_t *handle,
+int ini_read_uint32(ini_t *handler,
         char *section, char *name, uint32_t *value, uint32_t default_value)
 {
     INI_READ_UNSIGNED(uint32_t);
 }
 
-int ini_read_int64(ini_t *handle,
+int ini_read_int64(ini_t *handler,
         char *section, char *name, int64_t *value, int64_t default_value)
 {
     INI_READ_SIGNED(int64_t);
 }
 
-int ini_read_uint64(ini_t *handle,
+int ini_read_uint64(ini_t *handler,
         char *section, char *name, uint64_t *value, uint64_t default_value)
 {
     INI_READ_UNSIGNED(uint64_t);
 }
 
-int ini_read_float(ini_t *handle,
+int ini_read_float(ini_t *handler,
         char *section, char *name, float *value, float default_value)
 {
     char s[100] = { 0 };
-    int ret = ini_read_strn(handle, section, name, s, sizeof(s), NULL);
+    int ret = ini_read_strn(handler, section, name, s, sizeof(s), NULL);
     if (ret < 0)
         return ret;
 
@@ -575,11 +575,11 @@ int ini_read_float(ini_t *handle,
     return 1;
 }
 
-int ini_read_double(ini_t *handle,
+int ini_read_double(ini_t *handler,
         char *section, char *name, double *value, double default_value)
 {
     char s[100] = { 0 };
-    int ret = ini_read_strn(handle, section, name, s, sizeof(s), NULL);
+    int ret = ini_read_strn(handler, section, name, s, sizeof(s), NULL);
     if (ret < 0)
         return ret;
 
@@ -595,11 +595,11 @@ int ini_read_double(ini_t *handle,
     return 1;
 }
 
-int ini_read_ipv4_addr(ini_t *handle,
+int ini_read_ipv4_addr(ini_t *handler,
         char *section, char *name, struct sockaddr_in *addr, char *default_value)
 {
     char s[100] = { 0 };
-    int ret = ini_read_strn(handle, section, name, s, sizeof(s), default_value);
+    int ret = ini_read_strn(handler, section, name, s, sizeof(s), default_value);
     if (ret < 0)
         return ret;
 
