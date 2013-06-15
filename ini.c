@@ -81,7 +81,8 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
         len = strlen(*lineptr);
     }
 
-    free(_line);
+    if (_line)
+        free(_line);
 
     return len;
 }
@@ -359,8 +360,7 @@ ini_t *ini_load(char *path)
 
                 return NULL;
             }
-            if (old_value)
-                free(old_value);
+            free(old_value);
         }
     }
 
@@ -369,13 +369,8 @@ ini_t *ini_load(char *path)
 
     if (head == NULL)
     {
-        head = calloc(1, sizeof(struct ini_section));
-        if (head == NULL)
-        {
-            free(line);
-
+        if ((head = calloc(1, sizeof(struct ini_section))) == NULL)
             return NULL;
-        }
     }
 
     ini_print(head);
@@ -403,7 +398,6 @@ int ini_read_str(ini_t *handler,
         section = "global";
 
     struct ini_section *curr = handler;
-
     while (curr)
     {
         if (curr->name == NULL)
