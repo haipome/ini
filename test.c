@@ -82,6 +82,11 @@ int main()
     puts(city);
     free(city);
 
+    char *name = NULL;
+    ini_read_str(conf, NULL, "名字", &name, "");
+    puts(name);
+    free(name);
+
     ini_free(conf);
 
     return 0;

@@ -46,7 +46,11 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
     while (len >= 2 && (*lineptr)[len - 2] == '\\')
     {
         if (getline(&_line, &_n, stream) == -1)
+        {
+            free(_line);
+
             return 0;
+        }
 
         char *next_line = _line;
         while (isspace(*next_line))
@@ -60,7 +64,11 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
 
             *lineptr = realloc(*lineptr, *n);
             if (*lineptr == NULL)
+            {
+                free(_line);
+
                 return -1;
+            }
         }
 
         if (isspace((*lineptr)[len - 3]))
@@ -94,17 +102,14 @@ void ini_free(ini_t *handler)
         {
             arg_next = arg_curr->next;
 
-            if (arg_curr->name)
-                free(arg_curr->name);
-            if (arg_curr->value)
-                free(arg_curr->value);
+            free(arg_curr->name);
+            free(arg_curr->value);
             free(arg_curr);
 
             arg_curr = arg_next;
         }
 
-        if (curr->name)
-            free(curr->name);
+        free(curr->name);
         free(curr);
 
         curr = next;
@@ -273,7 +278,11 @@ ini_t *ini_load(char *path)
             if ((curr = find_section(head, name)) == NULL)
             {
                 if ((curr = create_section(head, name)) == NULL)
+                {
+                    free(line);
+
                     return NULL;
+                }
 
                 if (head == NULL)
                     head = curr;
@@ -310,7 +319,11 @@ ini_t *ini_load(char *path)
         if (curr == NULL)
         {
             if ((curr = create_section(head, "global")) == NULL)
+            {
+                free(line);
+
                 return NULL;
+            }
 
             if (head == NULL)
                 head = curr;
@@ -322,7 +335,11 @@ ini_t *ini_load(char *path)
         {
             arg_curr = create_arg(head, name, value);
             if (arg_curr == NULL)
+            {
+                free(line);
+
                 return NULL;
+            }
 
             if (arg_prev)
                 arg_prev->next = arg_curr;
@@ -338,6 +355,8 @@ ini_t *ini_load(char *path)
             {
                 ini_free(head);
 
+                free(line);
+
                 return NULL;
             }
             if (old_value)
@@ -352,7 +371,11 @@ ini_t *ini_load(char *path)
     {
         head = calloc(1, sizeof(struct ini_section));
         if (head == NULL)
+        {
+            free(line);
+
             return NULL;
+        }
     }
 
     ini_print(head);
@@ -373,8 +396,11 @@ static char *sstrncpy(char *dest, const char *src, size_t n)
 int ini_read_str(ini_t *handler,
         char *section, char *name, char **value, char *default_value)
 {
-    if (!handler || !section || !name || !value)
+    if (!handler || !name || !value)
         return -1;
+
+    if (section == NULL || *section == 0)
+        section = "global";
 
     struct ini_section *curr = handler;
 
