@@ -1,5 +1,5 @@
 /*
- * Description: Sample read only ini parser
+ * Description: simple read only ini parser
  *     History: yang@haipo.me, 2013/06/13, create
  */
 
@@ -53,9 +53,9 @@ typedef struct ini_section ini_t;
  *    by EOL (end-of-line) causes the line break to be ignored, and
  *    the "logical line" to be continued on the next actual line from
  *    the INI file. Example:
- *        name = sample read only ini parser
+ *        name = simple read only ini parser
  *    is the same with:
- *        name = sample \
+ *        name = simple \
  *               read only \
  *               ini parser
  */
@@ -83,7 +83,8 @@ int ini_read_str(ini_t *handler,
 /*
  * Read string from ini config handler.
  * If the real length of value is greater than or equal to n, n - 1
- * characters and a null terminator will be copied to value.
+ * characters and a null terminator will be copied to value, else
+ * the remainder of value pads with null bytes.
  */
 int ini_read_strn(ini_t *handler,
         char *section, char *name, char *value, size_t n, char *default_value);
@@ -132,11 +133,11 @@ int ini_read_double(ini_t *handler,
         char *section, char *name, double *value, double default_value);
 
 /*
- * Read a ipv4 addr such as: 127.0.0.1:8080
+ * Read a ipv4 addr such as: 127.0.0.1:8080 or 127.0.0.1 8080
  */
 int ini_read_ipv4_addr(ini_t *handler,
         char *section, char *name, struct sockaddr_in *addr, char *default_value);
 
-/* free a ini config handler */
+/* Free a ini config handler */
 void ini_free(ini_t *handler);
 

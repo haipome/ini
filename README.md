@@ -1,4 +1,4 @@
 ini
 ===
 
-sample read only ini parser
+simple read only ini parser

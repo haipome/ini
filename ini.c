@@ -1,5 +1,5 @@
 /*
- * Description: sample read only ini parser
+ * Description: simple read only ini parser
  *     History: yang@haipo.me, 2013/06/13, create
  */
 
