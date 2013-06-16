@@ -368,16 +368,6 @@ ini_t *ini_load(char *path)
     return head;
 }
 
-static char *sstrncpy(char *dest, const char *src, size_t n)
-{
-    if (n == 0)
-        return dest;
-
-    dest[0] = 0;
-
-    return strncat(dest, src, n - 1);
-}
-
 int ini_read_str(ini_t *handler,
         char *section, char *name, char **value, char *default_value)
 {
@@ -430,69 +420,75 @@ int ini_read_str(ini_t *handler,
     return 1;
 }
 
+static char *sstrncpy(char *dest, const char *src, size_t n)
+{
+    if (n == 0)
+        return dest;
+
+    dest[0] = 0;
+
+    return strncat(dest, src, n - 1);
+}
+
 int ini_read_strn(ini_t *handler,
         char *section, char *name, char *value, size_t n, char *default_value)
 {
-    char *_value = NULL;
-    int ret = ini_read_str(handler, section, name, &_value, default_value);
+    char *s = NULL;
+    int ret = ini_read_str(handler, section, name, &s, default_value);
     if (ret < 0)
         return ret;
-    if (_value == NULL)
-        return 1;
 
-    sstrncpy(value, _value, n);
-    free(_value);
+    memset(value, 0, n);
+
+    if (s)
+    {
+        sstrncpy(value, s, n);
+        free(s);
+    }
 
     return ret;
 }
 
-int __ini_read_num(ini_t *handler,
+static int ini_read_num(ini_t *handler,
         char *section, char *name, void *value, bool is_unsigned)
 {
-    char s[100] = { 0 };
-    int ret = ini_read_strn(handler, section, name, s, sizeof(s), NULL);
-    if (ret < 0)
-        return ret;
-
+    char *s = NULL;
+    int ret = ini_read_str(handler, section, name, &s, NULL);
     if (ret == 0)
     {
         if (is_unsigned)
-            *(uint64_t *)value = strtoull(s, NULL, 0);
+            *(unsigned long long int*)value = strtoull(s, NULL, 0);
         else
-            *(int64_t  *)value =  strtoll(s, NULL, 0);
+            *(long long int *)value = strtoll(s, NULL, 0);
 
-        return 0;
+        free(s);
     }
 
-    return 1;
+    return ret;
 }
 
 # define INI_READ_SIGNED(type) do { \
-    int64_t v; \
-    int ret = __ini_read_num(handler, section, name, &v, false); \
-    if (ret < 0) { \
-        return ret; \
-    } \
+    long long int v; \
+    int ret = ini_read_num(handler, section, name, &v, false); \
     if (ret == 0) { \
         *value = (type)v; \
-        return 0; \
     } \
-    *value = default_value; \
-    return 1; \
+    else if (ret > 0) { \
+        *value = default_value; \
+    } \
+    return ret; \
 } while (0)
 
 # define INI_READ_UNSIGNED(type) do { \
-    uint64_t v; \
-    int ret = __ini_read_num(handler, section, name, &v, true); \
-    if (ret < 0) { \
-        return ret; \
-    } \
+    unsigned long long int v; \
+    int ret = ini_read_num(handler, section, name, &v, true); \
     if (ret == 0) { \
         *value = (type)v; \
-        return 0; \
     } \
-    *value = default_value; \
-    return 1; \
+    else if (ret > 0) { \
+        *value = default_value; \
+    } \
+    return ret; \
 } while (0)
 
 int ini_read_int(ini_t *handler,
@@ -558,69 +554,81 @@ int ini_read_uint64(ini_t *handler,
 int ini_read_float(ini_t *handler,
         char *section, char *name, float *value, float default_value)
 {
-    char s[100] = { 0 };
-    int ret = ini_read_strn(handler, section, name, s, sizeof(s), NULL);
-    if (ret < 0)
-        return ret;
-
+    char *s = NULL;
+    int ret = ini_read_str(handler, section, name, &s, NULL);
     if (ret == 0)
     {
         *value = strtof(s, NULL);
 
-        return 0;
+        free(s);
+    }
+    else if (ret > 0)
+    {
+        *value = default_value;
     }
 
-    *value = default_value;
-
-    return 1;
+    return ret;
 }
 
 int ini_read_double(ini_t *handler,
         char *section, char *name, double *value, double default_value)
 {
-    char s[100] = { 0 };
-    int ret = ini_read_strn(handler, section, name, s, sizeof(s), NULL);
-    if (ret < 0)
-        return ret;
-
+    char *s = NULL;
+    int ret = ini_read_str(handler, section, name, &s, NULL);
     if (ret == 0)
     {
         *value = strtod(s, NULL);
 
-        return 0;
+        free(s);
+    }
+    else if (ret > 0)
+    {
+        *value = default_value;
     }
 
-    *value = default_value;
-
-    return 1;
+    return ret;
 }
 
 int ini_read_ipv4_addr(ini_t *handler,
         char *section, char *name, struct sockaddr_in *addr, char *default_value)
 {
-    char s[100] = { 0 };
-    int ret = ini_read_strn(handler, section, name, s, sizeof(s), default_value);
+    char *s = NULL;
+    int ret = ini_read_str(handler, section, name, &s, default_value);
     if (ret < 0)
         return ret;
 
-    char *sp = strchr(s, ':');
-    if (sp == NULL)
-        return -1;
-    *sp = '\0';
-
-    char *ip = s;
-    char *port = sp + 1;
-
-    while(isspace(*ip))
-        ++ip;
-    while (isspace(*port))
-        ++port;
-
     memset(addr, 0, sizeof(struct sockaddr_in));
-    addr->sin_family = AF_INET;
-    if (inet_aton(ip, &addr->sin_addr) == 0)
-        return -1;
-    addr->sin_port = htons((uint16_t)atoi(port));
+
+    if (s)
+    {
+        char *ip = strtok(s, ": \t");
+        if (ip == NULL)
+        {
+            free(s);
+
+            return -1;
+        }
+
+        char *port = strtok(NULL, ": \t");
+        if (port == NULL)
+        {
+            free(s);
+
+            return -1;
+        }
+
+        addr->sin_family = AF_INET;
+        if (inet_aton(ip, &addr->sin_addr) == 0)
+        {
+            free(s);
+
+            return -1;
+        }
+
+        addr->sin_port = htons((uint16_t)atoi(port));
+
+        free(s);
+    }
 
     return ret;
 }
