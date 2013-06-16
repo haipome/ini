@@ -56,10 +56,11 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
         while (isspace(*next_line))
             ++next_line;
         ssize_t next_len = strlen(next_line);
+        ssize_t need_len = len - 1 + next_len + 1;
 
-        if (*n < len + next_len)
+        if (*n < need_len)
         {
-            while (*n < len + next_len)
+            while (*n < need_len)
                 *n *= 2;
 
             *lineptr = realloc(*lineptr, *n);
@@ -123,13 +124,16 @@ static void ini_print(ini_t *handler)
 {
 # ifdef DEBUG
     struct ini_section *curr = handler;
+
     while (curr)
     {
         if (curr->name == NULL)
             continue;
 
         printf("[%s]\n", curr->name);
+
         struct ini_arg *arg = curr->args;
+
         while (arg)
         {
             if (arg->name == NULL || arg->value == NULL)
@@ -173,16 +177,8 @@ static struct ini_section *find_section(struct ini_section *head, char *name)
 
     while (curr)
     {
-        if (curr->name == NULL)
-        {
-            curr = curr->next;
-            continue;
-        }
-
-        if (strcmp(curr->name, name) == 0)
-        {
+        if (curr->name && strcmp(curr->name, name) == 0)
             return curr;
-        }
 
         curr = curr->next;
     }
@@ -224,16 +220,8 @@ static struct ini_arg *find_arg(struct ini_section *curr, char *name)
 
     while (arg)
     {
-        if (arg->name == NULL)
-        {
-            arg = arg->next;
-            continue;
-        }
-
-        if (strcmp(arg->name, name) == 0)
-        {
+        if (arg->name && strcmp(arg->name, name) == 0)
             return arg;
-        }
 
         arg = arg->next;
     }
@@ -267,14 +255,14 @@ ini_t *ini_load(char *path)
 
         if (len >= 3 && s[0] == '[' && s[len - 1] == ']')
         {
+            char *name = s + 1;
+            while (isspace(*name))
+                ++name;
+
             char *name_end = s + len - 1;
             *name_end-- = '\0';
             while (isspace(*name_end))
                 *name_end-- = '\0';
-
-            char *name = s + 1;
-            while (isspace(*name))
-                ++name;
 
             if ((curr = find_section(head, name)) == NULL)
             {
@@ -352,6 +340,7 @@ ini_t *ini_load(char *path)
         else
         {
             char *old_value = arg_curr->value;
+
             if ((arg_curr->value = strdup(value)) == NULL)
             {
                 ini_free(head);
@@ -360,6 +349,7 @@ ini_t *ini_load(char *path)
 
                 return NULL;
             }
+
             free(old_value);
         }
     }
