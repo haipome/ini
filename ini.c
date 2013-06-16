@@ -398,30 +398,22 @@ int ini_read_str(ini_t *handler,
         section = "global";
 
     struct ini_section *curr = handler;
+
     while (curr)
     {
-        if (curr->name == NULL)
-        {
-            curr = curr->next;
-            continue;
-        }
+        if (curr->name && strcmp(section, curr->name) == 0)
+            break;
 
-        if (strcmp(section, curr->name) != 0)
-        {
-            curr = curr->next;
-            continue;
-        }
+        curr = curr->next;
+    }
 
+    if (curr)
+    {
         struct ini_arg *arg = curr->args;
+
         while (arg)
         {
-            if (arg->name == NULL || arg->value == NULL)
-            {
-                arg = arg->next;
-                continue;
-            }
-
-            if (strcmp(arg->name, name) == 0)
+            if (arg->name && arg->value && strcmp(arg->name, name) == 0)
             {
                 *value = strdup(arg->value);
                 if (*value == NULL)
@@ -432,8 +424,6 @@ int ini_read_str(ini_t *handler,
 
             arg = arg->next;
         }
-
-        curr = curr->next;
     }
 
     if (default_value)
