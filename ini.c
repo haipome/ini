@@ -633,3 +633,31 @@ int ini_read_ipv4_addr(ini_t *handler,
     return ret;
 }
 
+int ini_read_bool(ini_t *handler,
+        char *section, char *name, bool *value, bool default_value)
+{
+    char *s = NULL;
+    int ret = ini_read_str(handler, section, name, &s, NULL);
+    if (ret == 0)
+    {
+        int i;
+        for (i = 0; s[i]; ++i)
+            s[i] = tolower(s[i]);
+
+        if (strcmp(s, "true") == 0)
+            *value = true;
+        else if (strcmp(s, "false") == 0)
+            *value = false;
+        else
+            *value = default_value;
+
+        free(s);
+    }
+    else if (ret > 0)
+    {
+        *value = default_value;
+    }
+
+    return ret;
+}
+

@@ -6,6 +6,7 @@
 # pragma once
 
 # include <stdint.h>
+# include <stdbool.h>
 # include <netinet/in.h>
 
 struct ini_arg
@@ -137,6 +138,13 @@ int ini_read_double(ini_t *handler,
  */
 int ini_read_ipv4_addr(ini_t *handler,
         char *section, char *name, struct sockaddr_in *addr, char *default_value);
+
+/*
+ * Read a bool from ini config handler. The value in the ini config file can be
+ * "true" or "false", the case are ignored.
+ */
+int ini_read_bool(ini_t *handler,
+        char *section, char *name, bool *value, bool default_value);
 
 /* Free a ini config handler */
 void ini_free(ini_t *handler);
