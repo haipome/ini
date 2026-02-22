@@ -43,10 +43,8 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
     char  *_line = NULL;
     size_t _n    = 0;
 
-    while (len >= 2 && (*lineptr)[len - 2] == '\\')
-    {
-        if (getline(&_line, &_n, stream) == -1)
-        {
+    while (len >= 2 && (*lineptr)[len - 2] == '\\') {
+        if (getline(&_line, &_n, stream) == -1) {
             free(_line);
 
             return 0;
@@ -58,14 +56,12 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
         ssize_t next_len = strlen(next_line);
         ssize_t need_len = len - 1 + next_len + 1;
 
-        if (*n < need_len)
-        {
+        if (*n < need_len) {
             while (*n < need_len)
                 *n *= 2;
 
             *lineptr = realloc(*lineptr, *n);
-            if (*lineptr == NULL)
-            {
+            if (*lineptr == NULL) {
                 free(_line);
 
                 return -1;
@@ -93,15 +89,13 @@ void ini_free(ini_t *handler)
     struct ini_section *curr = handler;
     struct ini_section *next = NULL;
 
-    while (curr)
-    {
+    while (curr) {
         next = curr->next;
 
         struct ini_arg *arg_curr = curr->args;
         struct ini_arg *arg_next = NULL;
 
-        while (arg_curr)
-        {
+        while (arg_curr) {
             arg_next = arg_curr->next;
 
             free(arg_curr->name);
@@ -125,10 +119,8 @@ static void ini_print(ini_t *handler)
 # ifdef DEBUG
     struct ini_section *curr = handler;
 
-    while (curr)
-    {
-        if (curr->name == NULL)
-        {
+    while (curr) {
+        if (curr->name == NULL) {
             curr = curr->next;
             continue;
         }
@@ -137,10 +129,8 @@ static void ini_print(ini_t *handler)
 
         struct ini_arg *arg = curr->args;
 
-        while (arg)
-        {
-            if (arg->name == NULL || arg->value == NULL)
-            {
+        while (arg) {
+            if (arg->name == NULL || arg->value == NULL) {
                 arg = arg->next;
                 continue;
             }
@@ -160,15 +150,13 @@ static struct ini_section *create_section(struct ini_section *head, char *name)
 {
     struct ini_section *p = calloc(1, sizeof(struct ini_section));
 
-    if (p == NULL)
-    {
+    if (p == NULL) {
         ini_free(head);
 
         return NULL;
     }
 
-    if ((p->name = strdup(name)) == NULL)
-    {
+    if ((p->name = strdup(name)) == NULL) {
         free(p);
         ini_free(head);
 
@@ -182,8 +170,7 @@ static struct ini_section *find_section(struct ini_section *head, char *name)
 {
     struct ini_section *curr = head;
 
-    while (curr)
-    {
+    while (curr) {
         if (curr->name && strcmp(curr->name, name) == 0)
             return curr;
 
@@ -197,23 +184,20 @@ static struct ini_arg *create_arg(struct ini_section *head, char *name, char *va
 {
     struct ini_arg *p = calloc(1, sizeof(struct ini_arg));
 
-    if (p == NULL)
-    {
+    if (p == NULL) {
         ini_free(head);
 
         return NULL;
     }
 
-    if ((p->name = strdup(name)) == NULL)
-    {
+    if ((p->name = strdup(name)) == NULL) {
         free(p);
         ini_free(head);
 
         return NULL;
     }
 
-    if ((p->value = strdup(value)) == NULL)
-    {
+    if ((p->value = strdup(value)) == NULL) {
         free(p->name);
         free(p);
         ini_free(head);
@@ -228,8 +212,7 @@ static struct ini_arg *find_arg(struct ini_section *curr, char *name)
 {
     struct ini_arg *arg = curr->args;
 
-    while (arg)
-    {
+    while (arg) {
         if (arg->name && strcmp(arg->name, name) == 0)
             return arg;
 
@@ -256,15 +239,13 @@ ini_t *ini_load(char *path)
     size_t   n  = 0;
     ssize_t len = 0;
 
-    while ((len = _getline(&line, &n, fp)) != -1)
-    {
+    while ((len = _getline(&line, &n, fp)) != -1) {
         char *s = line;
         if (is_comment(&s))
             continue;
         len = strlen(s);
 
-        if (len >= 3 && s[0] == '[' && s[len - 1] == ']')
-        {
+        if (len >= 3 && s[0] == '[' && s[len - 1] == ']') {
             char *name = s + 1;
             while (isspace(*name))
                 ++name;
@@ -274,10 +255,8 @@ ini_t *ini_load(char *path)
             while (isspace(*name_end))
                 *name_end-- = '\0';
 
-            if ((curr = find_section(head, name)) == NULL)
-            {
-                if ((curr = create_section(head, name)) == NULL)
-                {
+            if ((curr = find_section(head, name)) == NULL) {
+                if ((curr = create_section(head, name)) == NULL) {
                     free(line);
 
                     return NULL;
@@ -290,9 +269,7 @@ ini_t *ini_load(char *path)
 
                 prev = curr;
                 arg_prev = NULL;
-            }
-            else
-            {
+            } else {
                 arg_prev = curr->args;
                 while (arg_prev && arg_prev->next != NULL)
                     arg_prev = arg_prev->next;
@@ -315,10 +292,8 @@ ini_t *ini_load(char *path)
         while (isspace(*value))
             value++;
 
-        if (curr == NULL)
-        {
-            if ((curr = create_section(head, "global")) == NULL)
-            {
+        if (curr == NULL) {
+            if ((curr = create_section(head, "global")) == NULL) {
                 free(line);
 
                 return NULL;
@@ -330,11 +305,9 @@ ini_t *ini_load(char *path)
             arg_prev = NULL;
         }
 
-        if ((arg_curr = find_arg(curr, name)) == NULL)
-        {
+        if ((arg_curr = find_arg(curr, name)) == NULL) {
             arg_curr = create_arg(head, name, value);
-            if (arg_curr == NULL)
-            {
+            if (arg_curr == NULL) {
                 free(line);
 
                 return NULL;
@@ -346,13 +319,10 @@ ini_t *ini_load(char *path)
                 curr->args = arg_curr;
 
             arg_prev = arg_curr;
-        }
-        else
-        {
+        } else {
             char *old_value = arg_curr->value;
 
-            if ((arg_curr->value = strdup(value)) == NULL)
-            {
+            if ((arg_curr->value = strdup(value)) == NULL) {
                 ini_free(head);
 
                 free(line);
@@ -367,8 +337,7 @@ ini_t *ini_load(char *path)
     free(line);
     fclose(fp);
 
-    if (head == NULL)
-    {
+    if (head == NULL) {
         if ((head = calloc(1, sizeof(struct ini_section))) == NULL)
             return NULL;
     }
@@ -389,22 +358,18 @@ int ini_read_str(ini_t *handler,
 
     struct ini_section *curr = handler;
 
-    while (curr)
-    {
+    while (curr) {
         if (curr->name && strcmp(section, curr->name) == 0)
             break;
 
         curr = curr->next;
     }
 
-    if (curr)
-    {
+    if (curr) {
         struct ini_arg *arg = curr->args;
 
-        while (arg)
-        {
-            if (arg->name && arg->value && strcmp(arg->name, name) == 0)
-            {
+        while (arg) {
+            if (arg->name && arg->value && strcmp(arg->name, name) == 0) {
                 *value = strdup(arg->value);
                 if (*value == NULL)
                     return -1;
@@ -416,14 +381,11 @@ int ini_read_str(ini_t *handler,
         }
     }
 
-    if (default_value)
-    {
+    if (default_value) {
         *value = strdup(default_value);
         if (*value == NULL)
             return -1;
-    }
-    else
-    {
+    } else {
         *value = NULL;
     }
 
@@ -450,8 +412,7 @@ int ini_read_strn(ini_t *handler,
 
     memset(value, 0, n);
 
-    if (s)
-    {
+    if (s) {
         sstrncpy(value, s, n);
         free(s);
     }
@@ -464,8 +425,7 @@ static int ini_read_num(ini_t *handler,
 {
     char *s = NULL;
     int ret = ini_read_str(handler, section, name, &s, NULL);
-    if (ret == 0)
-    {
+    if (ret == 0) {
         if (is_unsigned)
             *(unsigned long long int*)value = strtoull(s, NULL, 0);
         else
@@ -566,14 +526,11 @@ int ini_read_float(ini_t *handler,
 {
     char *s = NULL;
     int ret = ini_read_str(handler, section, name, &s, NULL);
-    if (ret == 0)
-    {
+    if (ret == 0) {
         *value = strtof(s, NULL);
 
         free(s);
-    }
-    else if (ret > 0)
-    {
+    } else if (ret > 0) {
         *value = default_value;
     }
 
@@ -585,14 +542,11 @@ int ini_read_double(ini_t *handler,
 {
     char *s = NULL;
     int ret = ini_read_str(handler, section, name, &s, NULL);
-    if (ret == 0)
-    {
+    if (ret == 0) {
         *value = strtod(s, NULL);
 
         free(s);
-    }
-    else if (ret > 0)
-    {
+    } else if (ret > 0) {
         *value = default_value;
     }
 
@@ -609,27 +563,23 @@ int ini_read_ipv4_addr(ini_t *handler,
 
     memset(addr, 0, sizeof(struct sockaddr_in));
 
-    if (s)
-    {
+    if (s) {
         char *ip = strtok(s, ": \t");
-        if (ip == NULL)
-        {
+        if (ip == NULL) {
             free(s);
 
             return -1;
         }
 
         char *port = strtok(NULL, ": \t");
-        if (port == NULL)
-        {
+        if (port == NULL) {
             free(s);
 
             return -1;
         }
 
         addr->sin_family = AF_INET;
-        if (inet_aton(ip, &addr->sin_addr) == 0)
-        {
+        if (inet_aton(ip, &addr->sin_addr) == 0) {
             free(s);
 
             return -1;
@@ -648,8 +598,7 @@ int ini_read_bool(ini_t *handler,
 {
     char *s = NULL;
     int ret = ini_read_str(handler, section, name, &s, NULL);
-    if (ret == 0)
-    {
+    if (ret == 0) {
         int i;
         for (i = 0; s[i]; ++i)
             s[i] = tolower(s[i]);
@@ -662,12 +611,9 @@ int ini_read_bool(ini_t *handler,
             *value = default_value;
 
         free(s);
-    }
-    else if (ret > 0)
-    {
+    } else if (ret > 0) {
         *value = default_value;
     }
 
     return ret;
 }
-
