@@ -128,7 +128,10 @@ static void ini_print(ini_t *handler)
     while (curr)
     {
         if (curr->name == NULL)
+        {
+            curr = curr->next;
             continue;
+        }
 
         printf("[%s]\n", curr->name);
 
@@ -137,7 +140,10 @@ static void ini_print(ini_t *handler)
         while (arg)
         {
             if (arg->name == NULL || arg->value == NULL)
+            {
+                arg = arg->next;
                 continue;
+            }
 
             printf("    %-20s = %s\n", arg->name, arg->value);
             arg = arg->next;
@@ -163,6 +169,7 @@ static struct ini_section *create_section(struct ini_section *head, char *name)
 
     if ((p->name = strdup(name)) == NULL)
     {
+        free(p);
         ini_free(head);
 
         return NULL;
@@ -199,6 +206,7 @@ static struct ini_arg *create_arg(struct ini_section *head, char *name, char *va
 
     if ((p->name = strdup(name)) == NULL)
     {
+        free(p);
         ini_free(head);
 
         return NULL;
@@ -206,6 +214,8 @@ static struct ini_arg *create_arg(struct ini_section *head, char *name, char *va
 
     if ((p->value = strdup(value)) == NULL)
     {
+        free(p->name);
+        free(p);
         ini_free(head);
 
         return NULL;
@@ -284,7 +294,7 @@ ini_t *ini_load(char *path)
             else
             {
                 arg_prev = curr->args;
-                while (arg_prev->next != NULL)
+                while (arg_prev && arg_prev->next != NULL)
                     arg_prev = arg_prev->next;
             }
 
