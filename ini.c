@@ -3,7 +3,6 @@
  *     History: yang@haipo.me, 2013/06/13, create
  */
 
-
 # undef  _GNU_SOURCE
 # define _GNU_SOURCE
 
@@ -46,7 +45,6 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
     while (len >= 2 && (*lineptr)[len - 2] == '\\') {
         if (getline(&_line, &_n, stream) == -1) {
             free(_line);
-
             return 0;
         }
 
@@ -63,7 +61,6 @@ static ssize_t _getline(char **lineptr, size_t *n, FILE *stream)
             *lineptr = realloc(*lineptr, *n);
             if (*lineptr == NULL) {
                 free(_line);
-
                 return -1;
             }
         }
@@ -97,17 +94,14 @@ void ini_free(ini_t *handler)
 
         while (arg_curr) {
             arg_next = arg_curr->next;
-
             free(arg_curr->name);
             free(arg_curr->value);
             free(arg_curr);
-
             arg_curr = arg_next;
         }
 
         free(curr->name);
         free(curr);
-
         curr = next;
     }
 
@@ -152,14 +146,12 @@ static struct ini_section *create_section(struct ini_section *head, char *name)
 
     if (p == NULL) {
         ini_free(head);
-
         return NULL;
     }
 
     if ((p->name = strdup(name)) == NULL) {
         free(p);
         ini_free(head);
-
         return NULL;
     }
 
@@ -186,14 +178,12 @@ static struct ini_arg *create_arg(struct ini_section *head, char *name, char *va
 
     if (p == NULL) {
         ini_free(head);
-
         return NULL;
     }
 
     if ((p->name = strdup(name)) == NULL) {
         free(p);
         ini_free(head);
-
         return NULL;
     }
 
@@ -201,7 +191,6 @@ static struct ini_arg *create_arg(struct ini_section *head, char *name, char *va
         free(p->name);
         free(p);
         ini_free(head);
-
         return NULL;
     }
 
@@ -258,7 +247,6 @@ ini_t *ini_load(char *path)
             if ((curr = find_section(head, name)) == NULL) {
                 if ((curr = create_section(head, name)) == NULL) {
                     free(line);
-
                     return NULL;
                 }
 
@@ -295,7 +283,6 @@ ini_t *ini_load(char *path)
         if (curr == NULL) {
             if ((curr = create_section(head, "global")) == NULL) {
                 free(line);
-
                 return NULL;
             }
 
@@ -309,7 +296,6 @@ ini_t *ini_load(char *path)
             arg_curr = create_arg(head, name, value);
             if (arg_curr == NULL) {
                 free(line);
-
                 return NULL;
             }
 
@@ -324,9 +310,7 @@ ini_t *ini_load(char *path)
 
             if ((arg_curr->value = strdup(value)) == NULL) {
                 ini_free(head);
-
                 free(line);
-
                 return NULL;
             }
 
@@ -528,7 +512,6 @@ int ini_read_float(ini_t *handler,
     int ret = ini_read_str(handler, section, name, &s, NULL);
     if (ret == 0) {
         *value = strtof(s, NULL);
-
         free(s);
     } else if (ret > 0) {
         *value = default_value;
@@ -544,7 +527,6 @@ int ini_read_double(ini_t *handler,
     int ret = ini_read_str(handler, section, name, &s, NULL);
     if (ret == 0) {
         *value = strtod(s, NULL);
-
         free(s);
     } else if (ret > 0) {
         *value = default_value;
@@ -567,26 +549,22 @@ int ini_read_ipv4_addr(ini_t *handler,
         char *ip = strtok(s, ": \t");
         if (ip == NULL) {
             free(s);
-
             return -1;
         }
 
         char *port = strtok(NULL, ": \t");
         if (port == NULL) {
             free(s);
-
             return -1;
         }
 
         addr->sin_family = AF_INET;
         if (inet_aton(ip, &addr->sin_addr) == 0) {
             free(s);
-
             return -1;
         }
 
         addr->sin_port = htons((uint16_t)atoi(port));
-
         free(s);
     }
 
